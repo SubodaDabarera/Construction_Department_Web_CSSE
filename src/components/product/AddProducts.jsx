@@ -1,5 +1,11 @@
 import { Menu, Transition } from "@headlessui/react";
 import React, { Fragment, useState } from "react";
+import storage from "../firebase.config";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "firebase/storage";
 import { useNavigate } from "react-router";
 import { toast, ToastContainer } from "react-toastify";
 import { ChevronDownIcon } from "@heroicons/react/outline";
@@ -25,6 +31,7 @@ const AddProducts = () => {
   const [owner, setOwner] = useState({ name: "Select . . ." });
   const [description, setDescription] = useState("");
   const [title, setTitle] = useState("");
+  const [imgUrl, setImgUrl] = useState("");
   const [isCreationSuccess, setIsCreationSuccess] = useState(false);
 
   // error messages
@@ -36,7 +43,13 @@ const AddProducts = () => {
   const [isOwnerError, setIsOwnerError] = useState(false);
   const [isTitleError, setIsTitleError] = useState(false);
 
+  // image processing
+  const [file, setFile] = useState(null);
+  const [percent, setPercent] = useState(0);
+  const [disabled, setDisabled] = useState(false);
+
   const navigate = useNavigate();
+
 
   const handleSubmit = async () => {
     console.log("handle submit");
@@ -84,6 +97,7 @@ const AddProducts = () => {
           unitPrice: price,
           location,
           description,
+          imgUrl
         },
         setIsCreationSuccess
       )
@@ -123,6 +137,49 @@ const AddProducts = () => {
       });
     }
   };
+
+  // image processing start
+  function handleUpload() {
+    if (!file) {
+      alert("Please choose a file first!")
+    }
+
+    const storageRef = ref(storage, `/products/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const percent = Math.round(
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+          // update progress
+          setPercent(percent);
+
+          if (percent === 100) {
+            toast.success("Profile Picture uploaded successfully !", {
+              position: "top-right",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+            });
+          }
+        },
+        (err) => console.log(err),
+        () => {
+          // download url
+          getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+            console.log(url);
+            setImgUrl(url);
+            setDisabled(true);
+          });
+        }
+    );
+  }
+  // image processing end
 
   return (
     <div>
@@ -306,13 +363,41 @@ const AddProducts = () => {
             }}
           />
 
+          <label
+              htmlFor="image"
+              className="block text-base font-medium text-gray-700 mt-6"
+          >
+            Image :
+          </label>
+          <div>
+            <input type="file" onChange={(event)=>{setFile(event.target.files[0])}} />
+            <button
+                className="p-1 bg-slate-300 rounded-md mr-2 text-slate-800 hover:bg-gray-400"
+                onClick={handleUpload}>
+              Upload to Firebase
+            </button>
+            <p>{percent} "% done"</p>
+          </div>
+
+          {/*<input*/}
+          {/*    type="file"*/}
+          {/*    name="image"*/}
+          {/*    id="image"*/}
+          {/*    // autoComplete="given-name"*/}
+          {/*    className="mt-2 focus:ring-1 focus:ring-amber-400 focus:border-amber-400 block w-full shadow-sm sm:text-sm text-gray-600 border-gray-300 rounded-md"*/}
+          {/*    onChange={(event) => {*/}
+          {/*      setDescription(event.target.value);*/}
+          {/*    }}*/}
+          {/*/>*/}
+
           <div className="flex items-center justify-center mt-10">
-            <div
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-400 hover:bg-amber-600 transition-colors cursor-pointer"
-              onClick={handleSubmit}
+            <button
+                disabled={disabled}
+                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-amber-400 hover:bg-amber-600 transition-colors cursor-pointer"
+                onClick={handleSubmit}
             >
               Submit
-            </div>
+            </button>
           </div>
         </div>
       </>

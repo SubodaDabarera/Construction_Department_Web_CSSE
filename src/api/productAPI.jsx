@@ -3,7 +3,7 @@ import axios from "axios";
 const BACKEND_URL = "http://localhost:8000/api";
 
 export const addProduct = async (
-  { owner, title, unitPrice, quantity, location, description },
+  { owner, title, unitPrice, quantity, location, description, imgUrl },
   setIsCreationSuccess
 ) => {
   try {
@@ -15,6 +15,7 @@ export const addProduct = async (
         quantity,
         location,
         description,
+        imgUrl,
       })
       .then((result) => {
         setIsCreationSuccess(result.data.success);
