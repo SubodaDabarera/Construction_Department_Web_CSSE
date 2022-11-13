@@ -19,12 +19,14 @@ import {
   getApprovedOrderList,
   getDeclinedOrderList,
   getPendingOrderList,
+  getOrderByParamsId,
 } from "../../api/orderAPI";
 
 export default function PendingOrders() {
   const [pendingOrders, setPendingOrders] = useState([]);
   const [open, setOpen] = useState(false);
   const [productDetails, setProductDetails] = useState("");
+  const [orderDetails, setOrderDetails] = useState("");
 
   useEffect(() => {
     async function getOrders() {
@@ -36,10 +38,11 @@ export default function PendingOrders() {
     getOrders();
   }, []);
 
-  const handleOpen = async (productId) => {
-    await viewProduct(productId, setProductDetails).then(() => {
+  const handleOpen = async (orderId) => {
+    await getOrderByParamsId(orderId, setOrderDetails).then(() => {
       console.log("product retrived successfully");
     });
+
     setOpen(true);
   };
 

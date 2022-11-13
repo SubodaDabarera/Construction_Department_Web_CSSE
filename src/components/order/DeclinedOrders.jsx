@@ -15,12 +15,18 @@ import {
   DialogActions,
 } from "@mui/material";
 import { AiOutlineEdit } from "react-icons/ai";
-import { getApprovedOrderList, getDeclinedOrderList } from "../../api/orderAPI";
+import {
+  getApprovedOrderList,
+  getDeclinedOrderList,
+  getOrderByParamsId,
+  updateRequestStatus,
+} from "../../api/orderAPI";
 
 export default function DeclinedOrders() {
   const [declinedOrders, setDeclinedOrders] = useState([]);
   const [open, setOpen] = useState(false);
   const [productDetails, setProductDetails] = useState("");
+  const [orderDetails, setOrderDetails] = useState("");
 
   useEffect(() => {
     async function getOrders() {
@@ -32,10 +38,11 @@ export default function DeclinedOrders() {
     getOrders();
   }, []);
 
-  const handleOpen = async (productId) => {
-    await viewProduct(productId, setProductDetails).then(() => {
+  const handleOpen = async (orderId) => {
+    await getOrderByParamsId(orderId, setOrderDetails).then(() => {
       console.log("product retrived successfully");
     });
+
     setOpen(true);
   };
 
@@ -43,18 +50,21 @@ export default function DeclinedOrders() {
     setOpen(false);
   };
 
-  const handleDelete = async (productId) => {
-    await deleteProduct(productId).then(() => {
-      console.log("product deleted successfully");
+  const handleDicline = async (orderId) => {
+    let status = "deleted";
+    await updateRequestStatus({ orderId, updateOrder: status }).then(() => {
+      console.log("Order details updated");
     });
 
-    // async function getProducts() {
-    //   await viewProductsList(setProductList).then(() => {
-    //     console.log("Products retrived successfully");
-    //   });
-    // }
+    setOpen(false);
 
-    // getProducts();
+    async function getOrders() {
+      await getDeclinedOrderList(setDeclinedOrders).then(() => {
+        console.log("Products retrived successfully");
+      });
+    }
+
+    getOrders();
   };
 
   return (
@@ -141,23 +151,30 @@ export default function DeclinedOrders() {
                           <DialogContent>
                             <DialogContentText id="alert-dialog-description">
                               <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Title : {productDetails.title}
+                                Name : {orderDetails.owner}
+                              </p>
+
+                              <p className="align-middle text-gray-900 pb-4 ml-4">
+                                Product : {orderDetails.title}
                               </p>
                               <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Owner : {productDetails.owner}
+                                Unit Price : {orderDetails.unitPrice}
                               </p>
                               <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Price : {productDetails.unitPrice}
+                                Quantity : {orderDetails.quantity}
+                              </p>
+                              {/* <p className="align-middle text-gray-900 pb-4 ml-4">
+                                Price : {orderDetails.unitPrice}
+                              </p> */}
+                              <p className="align-middle text-gray-900 pb-4 ml-4">
+                                Supplier Name : {orderDetails.siteManagerName}
+                              </p>
+                              {/* <p className="align-middle text-gray-900 pb-4 ml-4">
+                                Location : {oorderDetailsrder.location}
                               </p>
                               <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Quantity : {productDetails.quantity}
-                              </p>
-                              <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Location : {productDetails.location}
-                              </p>
-                              <p className="align-middle text-gray-900 pb-4 ml-4">
-                                Quantity : {productDetails.quantity}
-                              </p>
+                                Quantity : {orderDetails.quantity}
+                              </p> */}
                             </DialogContentText>
                           </DialogContent>
 
@@ -168,12 +185,21 @@ export default function DeclinedOrders() {
                             >
                               <AiOutlineDownload size={18} />
                             </button> */}
+
+                            <button
+                              type="button"
+                              className="inline-flex w-full font-semibold items-center justify-center rounded-md border border-transparent bg-red-600 mx-10 mb-4 text-white px-4 py-2 text-sm"
+                              onClick={() => handleDicline(orderDetails._id)}
+                            >
+                              Decline
+                            </button>
+
                             <button
                               type="button"
                               className="inline-flex w-full font-semibold items-center justify-center rounded-md border border-transparent bg-yellow-600 mx-10 mb-4 text-white px-4 py-2 text-sm"
                               onClick={() => handleClose()}
                             >
-                              OK
+                              Cancel
                             </button>
                           </DialogActions>
                         </Dialog>
